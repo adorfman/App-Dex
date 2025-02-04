@@ -1,10 +1,19 @@
 package App::Dex;
 use Moo;
 use List::Util qw( first );
+use Pod::Usage qw(pod2usage);
+use Try::Tiny; 
 use YAML::PP qw( LoadFile );
 use IPC::Run3;
 
+use Data::Dumper;
+
 our $VERSION = '0.002003';
+
+has argv => (
+    is      => 'ro', 
+    default => sub { [] }
+);
 
 has config_file => (
     is      => 'ro',
@@ -27,16 +36,46 @@ has config => (
     is      => 'ro',
     lazy    => 1,
     builder => sub {
-        LoadFile shift->config_file;
+        my ( $self ) = @_;  
+
+        my $cfg_data = LoadFile shift->config_file;
+
+        if ( ref($cfg_data) eq 'ARRAY' ) {
+            return { version => 1, blocks => $cfg_data };
+        }
+        elsif (ref($cfg_data) eq 'HASH') {
+            return $cfg_data;
+        }
+        else {
+            die 'Invalid dexfile: '. $self->config_file;
+        }  
     },
 );
+
+has config_version => (
+    is      => 'ro',
+    builder => sub {
+        my ( $self ) = @_; 
+
+        return $self->config->{version};
+    },
+);
+
+
+has config_blocks => (
+    is      => 'ro',
+    lazy    => 1,
+    builder => sub {
+       shift->config->{blocks};
+    },
+); 
 
 has menu => (
     is      => 'ro',
     lazy    => 1,
     builder => sub {
         my ( $self ) = @_;
-        return [ $self->_menu_data( $self->config, 0 ) ];
+        return [ $self->_menu_data( $self->config_blocks, 0 ) ];
     }
 );
 
@@ -71,7 +110,7 @@ sub display_menu {
 sub resolve_block {
     my ( $self, $path ) = @_;
 
-    return $self->_resolve_block( $path, $self->config );
+    return $self->_resolve_block( $path, $self->config_blocks );
 }
 
 sub _resolve_block {
@@ -105,6 +144,50 @@ sub _run_block_shell {
     foreach my $command ( @{$block->{shell}} ) {
         run3( $command );
     }
+}
+
+
+#around BUILDARGS => sub {
+#  my ( $orig, $class, @args ) = @_;
+#  return { attr1 => $args[0] }
+#    if @args == 1 && !ref $args[0];
+#  return $class->$orig(@args);
+#};
+
+
+sub run {
+    my ( $self ) = @_;
+
+    my @argv = @{$self->argv};
+
+    if ( @argv && ( $argv[0] eq '--help' || $argv[0] eq '-h' ) ) {
+        pod2usage( -verbose => 2 );
+    }
+
+    my $app = App::Dex->new;
+
+    # Throw an error if we couldn't find a config file.
+    try { $app->config_file } catch { die "Error: No config file found.\n" };
+
+    if ( @argv ) {
+        my $block = $app->resolve_block( [ @argv ] );
+
+        if ( ! $block ) {
+            if ( $ENV{DEX_FALLBACK_CMD} ) {
+                exec $ENV{DEX_FALLBACK_CMD}, @argv;
+            } else {
+                print STDERR "Error: No such command.\n\n";
+                $app->display_menu;
+                exit -1;
+            }
+        }
+
+        $app->process_block( $block );
+    } else {
+        $app->display_menu;
+    }
+ 
+
 }
 
 1;
