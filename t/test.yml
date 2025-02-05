@@ -1,15 +1,20 @@
 vars: 
   dir: 'somedir' 
   package: 'my package'
+  cmd_var: 
+    command: 'test 0 -eq 1'
+    default: 6
 blocks:
   - name: test
     desc: "test version 2"
     vars:
       dir: 'localdir'
       file: 'somefile'
-      truevar:  0
+      truevar: 
+        env: IS_TRUE
+        default: 0
     shell: 
-      - echo 'version 2 [%package%] [%dir%] [%file%]'
+      - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%]'
       - command: echo 'shell with for-vars [%var%]'
         for-vars: 
           - 'one'

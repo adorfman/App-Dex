@@ -80,9 +80,46 @@ has global_vars => (
     builder => sub {
         my ( $self ) = @_; 
 
-        return ($self->config->{vars} || {});
+        return $self->init_vars($self->config->{vars});
     },
 ); 
+
+sub init_vars {
+    my ( $self, $var_cfg ) = @_;
+
+    $var_cfg ||= {};
+    my $ret = {};
+
+    foreach my $var ( keys %$var_cfg ) {
+        my $val = $var_cfg->{$var};
+
+        if ( !ref($val) ) {
+            $val = { value => $val };
+        }
+        elsif( ref($val) ne 'HASH' ) {
+            die "Invalid var $var"
+        }
+
+
+        if ( $val->{command} ) {
+            local $?;
+
+            run3(['/bin/bash', '-c', $val->{command}], undef, \$ret->{$var} );
+
+            undef $ret->{$var} if $?; # ensure fallback to default value on command error
+        }
+        elsif ( $val->{env} ) { 
+            $ret->{$var} = $ENV{$val->{env}};
+        }
+
+        if (! defined $ret->{$var}) {
+            $ret->{$var} = $val->{value} || $val->{default};
+        }
+
+    }
+
+    return $ret;
+}
 
 has tt => (
     is      => 'ro',
@@ -175,7 +212,7 @@ sub _resolve_block {
 sub process_block {
     my ( $self, $block ) = @_;
 
-    my $vars = $block->{vars} || {}; 
+    my $vars = $self->init_vars( $block->{vars} );
 
     foreach my $shell ( @{$block->{shell} || []} ) {
 
