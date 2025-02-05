@@ -1,0 +1,11 @@
+vars: 
+  dir: 'somedir' 
+  package: 'my package'
+blocks:
+  - name: test
+    desc: "test version 2"
+    vars:
+      dir: 'localdir'
+      file: 'somefile'
+    shell: 
+      - echo 'version 2 [%package%] [%dir%] [%file%]'

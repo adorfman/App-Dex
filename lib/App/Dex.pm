@@ -2,6 +2,7 @@ package App::Dex;
 use Moo;
 use List::Util qw( first );
 use Pod::Usage qw(pod2usage);
+use Template::Simple;
 use Try::Tiny; 
 use YAML::PP qw( LoadFile );
 use IPC::Run3;
@@ -20,6 +21,8 @@ has config_file => (
     isa     => sub { die 'Config file not found' unless $_[0] && -e $_[0] },
     lazy    => 1,
     default => sub {
+        return $ENV{DEX_FILE} if $ENV{DEX_FILE};
+
         first { -e $_ } @{shift->config_file_names};
     },
 );
@@ -54,6 +57,7 @@ has config => (
 
 has config_version => (
     is      => 'ro',
+    lazy    => 1, 
     builder => sub {
         my ( $self ) = @_; 
 
@@ -69,6 +73,30 @@ has config_blocks => (
        shift->config->{blocks};
     },
 ); 
+
+has global_vars => (
+    is      => 'ro',
+    lazy    => 1, 
+    builder => sub {
+        my ( $self ) = @_; 
+
+        return ($self->config->{vars} || {});
+    },
+); 
+
+has tt => (
+    is      => 'ro',
+    lazy    => 1, 
+    builder => sub {
+       Template::Simple->new();
+    },
+); 
+
+sub render {
+    my ( $self, $tmpl, $vars ) = @_; 
+
+    return $self->tt->render( $tmpl, { %{$self->global_vars}, %$vars } );
+}
 
 has menu => (
     is      => 'ro',
@@ -134,25 +162,19 @@ sub process_block {
     my ( $self, $block ) = @_;
 
     if ( $block->{shell} ) {
-        _run_block_shell( $block );
+       $self->_run_block_shell( $block );
     }
 }
 
 sub _run_block_shell {
-    my ( $block ) = @_;
+    my ( $self, $block ) = @_;
 
-    foreach my $command ( @{$block->{shell}} ) {
-        run3( $command );
+    my $vars = $block->{vars} || {};
+
+    foreach my $command_tmpl ( @{$block->{shell}} ) {
+        run3( ${$self->render( $command_tmpl, $vars )} );
     }
 }
-
-
-#around BUILDARGS => sub {
-#  my ( $orig, $class, @args ) = @_;
-#  return { attr1 => $args[0] }
-#    if @args == 1 && !ref $args[0];
-#  return $class->$orig(@args);
-#};
 
 
 sub run {
