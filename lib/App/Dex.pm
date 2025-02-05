@@ -1,5 +1,6 @@
 package App::Dex;
 use Moo;
+use File::pushd;
 use List::Util qw( first );
 use Pod::Usage qw(pod2usage);
 use Template::Simple;
@@ -106,7 +107,7 @@ sub init_vars {
 
             run3(['/bin/bash', '-c', $val->{command}], undef, \$ret->{$var} );
 
-            undef $ret->{$var} if $?; # ensure fallback to default value on command error
+            undef $ret->{$var} if $?; # ensure fallback to default value on command error 
         }
         elsif ( $val->{env} ) { 
             $ret->{$var} = $ENV{$val->{env}};
@@ -214,18 +215,31 @@ sub process_block {
 
     my $vars = $self->init_vars( $block->{vars} );
 
-    foreach my $shell ( @{$block->{shell} || []} ) {
+    #warn(Dumper($block->{commands}));
+    $block->{commands} ||= [];
 
-        my $cfg = ref($shell) ? $shell : { command => $shell };
+    foreach my $shell ( reverse @{$block->{shell} || []} ) {
+
+        my $cfg = { exec => $shell };
+
+        unshift @{$block->{commands}}, $cfg;
+    }
+
+    foreach my $cfg ( @{$block->{commands}} ) { 
 
         if ( $self->check_cond_fail($cfg->{condition}, $vars) ) {
            next; 
         }
 
-        my $cmd_tmpl = $cfg->{command};
+        if ( my $diag_tmpl = $cfg->{diag} ) {
+           $cfg->{exec} = "echo '$diag_tmpl'"
+        }
 
-        run3( ${$self->render( $cmd_tmpl, { var => $_, %$vars } )} ) 
-            foreach @{$cfg->{'for-vars'} || [1] }; 
+        if ( my $cmd_tmpl = $cfg->{exec} ) {
+
+            run3( ${$self->render( $cmd_tmpl, { var => $_, %$vars } )} ) 
+                foreach @{$cfg->{'for-vars'} || [1] }; 
+        }
     }
 
 }

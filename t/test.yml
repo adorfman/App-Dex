@@ -4,6 +4,8 @@ vars:
   cmd_var: 
     command: 'test 0 -eq 1'
     default: 6
+  pwd:
+    command: pwd | tr -d '\n'
 blocks:
   - name: test
     desc: "test version 2"
@@ -14,11 +16,14 @@ blocks:
         env: IS_TRUE
         default: 0
     shell: 
-      - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%]'
-      - command: echo 'shell with for-vars [%var%]'
+      - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%] [%pwd%]'
+      - echo 'second shell command'
+    commands:
+      - diag: diag dir [%pwd%]
+      - exec: echo 'shell with for-vars [%var%]'
         for-vars: 
           - 'one'
           - 'two'
-      - command: echo 'conditional command'
+      - exec: echo 'conditional command'
         condition: 1 -eq [%truevar%]
 
