@@ -31,6 +31,6 @@ blocks:
           - 'two'
       - exec: echo 'conditional command'
         condition: 1 -eq [%truevar%]
-
+      - exec: pwd 
       - exec: pwd
-#        dir:  '[%pwd%]/lib'
+        dir:  '[%pwd%]/t'

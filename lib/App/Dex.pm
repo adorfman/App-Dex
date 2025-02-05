@@ -251,7 +251,10 @@ sub process_block {
 
         my $dir = $cfg->{dir};
 
-        my $cmd_dir = pushd ${$self->render( $dir, { var => $_, %$vars } )}  if $dir; 
+        if ( $dir ) {  
+            undef $block_dir;
+            $block_dir = pushd ${$self->render( $dir, { var => $_, %$vars } )}  
+        }
 
         if ( $self->check_cond_fail($cfg->{condition}, $vars) ) {
            next; 
