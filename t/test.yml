@@ -9,3 +9,8 @@ blocks:
       file: 'somefile'
     shell: 
       - echo 'version 2 [%package%] [%dir%] [%file%]'
+      - command: echo 'shell with for-vars [%var%]'
+        for-vars: 
+          - 'one'
+          - 'two'
+

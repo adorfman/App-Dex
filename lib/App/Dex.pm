@@ -161,20 +161,34 @@ sub _resolve_block {
 sub process_block {
     my ( $self, $block ) = @_;
 
-    if ( $block->{shell} ) {
-       $self->_run_block_shell( $block );
+    my $vars = $block->{vars} || {}; 
+
+    foreach my $shell ( @{$block->{shell} || []} ) {
+
+        my $cmd_tmpl = ref($shell) ? $shell->{command} : $shell;
+
+        if ( ref($shell) and my @vars = @{$shell->{'for-vars'} || [] }) {
+            run3( ${$self->render( $cmd_tmpl, { var => $_, %$vars } )} ) foreach @vars;
+        }
+        else {
+            run3( ${$self->render( $cmd_tmpl, $vars )} );
+        }
     }
+
+    #if ( $block->{shell} ) {
+    #   $self->_run_block_shell( $block );
+    #}
 }
 
-sub _run_block_shell {
-    my ( $self, $block ) = @_;
-
-    my $vars = $block->{vars} || {};
-
-    foreach my $command_tmpl ( @{$block->{shell}} ) {
-        run3( ${$self->render( $command_tmpl, $vars )} );
-    }
-}
+#sub _run_block_shell {
+#    my ( $self, $block ) = @_;
+#
+#    my $vars = $block->{vars} || {};
+#
+#    foreach my $command_tmpl ( @{$block->{shell}} ) {
+#        run3( ${$self->render( $command_tmpl, $vars )} );
+#    }
+#}
 
 
 sub run {
