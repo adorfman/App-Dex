@@ -7,10 +7,13 @@ blocks:
     vars:
       dir: 'localdir'
       file: 'somefile'
+      truevar:  0
     shell: 
       - echo 'version 2 [%package%] [%dir%] [%file%]'
       - command: echo 'shell with for-vars [%var%]'
         for-vars: 
           - 'one'
           - 'two'
+      - command: echo 'conditional command'
+        condition: 1 -eq [%truevar%]
 

@@ -98,6 +98,20 @@ sub render {
     return $self->tt->render( $tmpl, { %{$self->global_vars}, %$vars } );
 }
 
+sub check_cond_fail {
+    my ( $self, $cond_tmpl, $vars ) = @_;  
+
+    return 0 if !$cond_tmpl;
+
+    my $cond = ${$self->render( $cond_tmpl, $vars )};
+
+    system('/bin/bash', '-c', "test $cond");
+
+    my $exit = $? >> 8;
+
+    return $exit;
+}
+
 has menu => (
     is      => 'ro',
     lazy    => 1,
@@ -165,31 +179,19 @@ sub process_block {
 
     foreach my $shell ( @{$block->{shell} || []} ) {
 
-        my $cmd_tmpl = ref($shell) ? $shell->{command} : $shell;
+        my $cfg = ref($shell) ? $shell : { command => $shell };
 
-        if ( ref($shell) and my @vars = @{$shell->{'for-vars'} || [] }) {
-            run3( ${$self->render( $cmd_tmpl, { var => $_, %$vars } )} ) foreach @vars;
+        if ( $self->check_cond_fail($cfg->{condition}, $vars) ) {
+           next; 
         }
-        else {
-            run3( ${$self->render( $cmd_tmpl, $vars )} );
-        }
+
+        my $cmd_tmpl = $cfg->{command};
+
+        run3( ${$self->render( $cmd_tmpl, { var => $_, %$vars } )} ) 
+            foreach @{$cfg->{'for-vars'} || [1] }; 
     }
 
-    #if ( $block->{shell} ) {
-    #   $self->_run_block_shell( $block );
-    #}
 }
-
-#sub _run_block_shell {
-#    my ( $self, $block ) = @_;
-#
-#    my $vars = $block->{vars} || {};
-#
-#    foreach my $command_tmpl ( @{$block->{shell}} ) {
-#        run3( ${$self->render( $command_tmpl, $vars )} );
-#    }
-#}
-
 
 sub run {
     my ( $self ) = @_;
