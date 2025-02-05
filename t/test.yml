@@ -9,6 +9,7 @@ vars:
 blocks:
   - name: test
     desc: "test version 2"
+    dir:  '[%pwd%]/lib' 
     vars:
       dir: 'localdir'
       file: 'somefile'
@@ -22,7 +23,7 @@ blocks:
       - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%] [%pwd%]'
       - echo 'second shell command'
     commands:
-      - diag: diag dir [%var%] [%pwd%]
+      - diag: diag dir [%var%] in [%pwd%]
         for-vars: some_list
       - exec: echo 'shell with for-vars [%var%]'
         for-vars: 
@@ -31,3 +32,5 @@ blocks:
       - exec: echo 'conditional command'
         condition: 1 -eq [%truevar%]
 
+      - exec: pwd
+#        dir:  '[%pwd%]/lib'

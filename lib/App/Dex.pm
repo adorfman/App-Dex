@@ -1,6 +1,6 @@
 package App::Dex;
 use Moo;
-use File::pushd;
+use File::pushd qw|pushd|;
 use List::Util qw( first );
 use Pod::Usage qw(pod2usage);
 use Template::Simple;
@@ -230,7 +230,12 @@ sub _resolve_block {
 sub process_block {
     my ( $self, $block ) = @_;
 
+
+
     my $vars = $self->init_vars( $block->{vars} );
+
+    my $dir       = $block->{dir}; 
+    my $block_dir = pushd ${$self->render( $dir, { var => $_, %$vars } )}  if $dir;   
 
     #warn(Dumper($block->{commands}));
     $block->{commands} ||= [];
@@ -243,6 +248,10 @@ sub process_block {
     }
 
     foreach my $cfg ( @{$block->{commands}} ) { 
+
+        my $dir = $cfg->{dir};
+
+        my $cmd_dir = pushd ${$self->render( $dir, { var => $_, %$vars } )}  if $dir; 
 
         if ( $self->check_cond_fail($cfg->{condition}, $vars) ) {
            next; 
