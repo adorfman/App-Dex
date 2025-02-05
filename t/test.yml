@@ -15,11 +15,15 @@ blocks:
       truevar: 
         env: IS_TRUE
         default: 0
+      some_list:
+        - 'this'
+        - 'that' 
     shell: 
       - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%] [%pwd%]'
       - echo 'second shell command'
     commands:
-      - diag: diag dir [%pwd%]
+      - diag: diag dir [%var%] [%pwd%]
+        for-vars: some_list
       - exec: echo 'shell with for-vars [%var%]'
         for-vars: 
           - 'one'

@@ -94,7 +94,7 @@ sub init_vars {
     foreach my $var ( keys %$var_cfg ) {
         my $val = $var_cfg->{$var};
 
-        if ( !ref($val) ) {
+        if ( !ref($val) or ref($val) eq 'ARRAY' ) {
             $val = { value => $val };
         }
         elsif( ref($val) ne 'HASH' ) {
@@ -134,6 +134,23 @@ sub render {
     my ( $self, $tmpl, $vars ) = @_; 
 
     return $self->tt->render( $tmpl, { %{$self->global_vars}, %$vars } );
+}
+
+sub get_for_vars {
+    my ( $self, $list, $vars ) = @_;
+
+    return 1 if !$list;
+
+    #my $list = $cfg->{'for-vars'};
+
+    if ( ref($list) eq 'ARRAY' ) { 
+        return @{$list};
+    }
+    elsif ( $list && !ref($list) ) {
+        return @{ $vars->{$list} || $self->global_vars->{$list} || [] };
+    }
+
+    return ();
 }
 
 sub check_cond_fail {
@@ -238,7 +255,7 @@ sub process_block {
         if ( my $cmd_tmpl = $cfg->{exec} ) {
 
             run3( ${$self->render( $cmd_tmpl, { var => $_, %$vars } )} ) 
-                foreach @{$cfg->{'for-vars'} || [1] }; 
+                foreach $self->get_for_vars($cfg->{'for-vars'}, $vars ); 
         }
     }
 
