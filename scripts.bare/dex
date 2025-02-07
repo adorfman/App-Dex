@@ -38,7 +38,12 @@ I<Run the tests>.
 
 =head1 DEX FILE SPEC
 
-Dex uses YAML and expects the following format:
+Dex uses YAML and expects one the following formats:
+
+=head2 Standard 
+
+This  format takes a list of C<blocks> with attributes that define a command 
+and its' sub commands. 
 
  ---
  - name: CommandName
@@ -67,3 +72,73 @@ following are supported attributes:
 
 =back
 
+=head2 Vesion 2 
+
+The Version 2 format expands the  C<Standard> format with additional options and 
+features.
+
+  vars: 
+    some_dir: 'somedir' 
+    cwd:
+      from_command: pwd | tr -d '\n'
+      default: 'Unknown directory'
+  blocks:
+    - name: test
+      desc: "test version 2"
+      dir:  '[%pwd%]/lib' 
+      vars:
+        dir: 'localdir'
+        file: 'somefile'
+        truevar: 
+          from_env: IS_TRUE
+          default: 0
+        some_list:
+          - 'this'
+          - 'that' 
+      shell: 
+        - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%] [%pwd%]'
+      commands:
+        - diag: diag dir [%var%] in [%pwd%]
+          for-vars: some_list
+        - exec: echo 'shell with for-vars [%var%]'
+          for-vars: 
+            - 'one'
+            - 'two'
+        - exec: echo 'conditional command'
+          condition: 1 -eq [%truevar%]
+        - exec: pwd
+          dir:  '[%pwd%]/t' 
+
+
+This format is a dictionary that supports the following attributes:
+ 
+=over 4
+
+=item * 
+
+vars: This attribute takes a dictionary that defines global variables that will
+              availble to use in all block attributes. 
+
+They can defined as a number, string or list.
+
+ varName: 'some string or number'
+ varList: 
+   - one
+   - two
+   - three
+
+They also take a dictionary config with the following attributes:
+
+=over 4
+
+=item * from_command: Set the variable to the STDOUT of this command. The command must have an exit value of 0 or will be assumed it failed.
+
+=item * from_command: Set the variable to the value of this environment variable.
+
+=item * default: If the execution of C<from_command> returns non-zero or the environment variable for C<from_env> is not set, set this value.
+
+=back
+
+=item * blocks: This takes the same list as the C<Standard Format>.
+
+=back

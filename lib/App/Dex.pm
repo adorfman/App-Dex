@@ -8,8 +8,6 @@ use Try::Tiny;
 use YAML::PP qw( LoadFile );
 use IPC::Run3;
 
-use Data::Dumper;
-
 our $VERSION = '0.002003';
 
 has argv => (
@@ -102,15 +100,15 @@ sub init_vars {
         }
 
 
-        if ( $val->{command} ) {
+        if ( $val->{from_command} ) {
             local $?;
 
-            run3(['/bin/bash', '-c', $val->{command}], undef, \$ret->{$var} );
+            run3(['/bin/bash', '-c', $val->{from_command}], undef, \$ret->{$var} );
 
             undef $ret->{$var} if $?; # ensure fallback to default value on command error 
         }
-        elsif ( $val->{env} ) { 
-            $ret->{$var} = $ENV{$val->{env}};
+        elsif ( $val->{from_env} ) { 
+            $ret->{$var} = $ENV{$val->{from_env}};
         }
 
         if (! defined $ret->{$var}) {
@@ -133,7 +131,7 @@ has tt => (
 sub render {
     my ( $self, $tmpl, $vars ) = @_; 
 
-    return $self->tt->render( $tmpl, { %{$self->global_vars}, %$vars } );
+    return ${ $self->tt->render( $tmpl, { %{$self->global_vars}, %$vars } ) };
 }
 
 sub get_for_vars {
@@ -141,24 +139,26 @@ sub get_for_vars {
 
     return 1 if !$list;
 
-    #my $list = $cfg->{'for-vars'};
-
+    # If We have an array already just return that.
     if ( ref($list) eq 'ARRAY' ) { 
         return @{$list};
     }
+    # If we have a scalar value search for a matching local or global 
+    # var. Return an empty list if no match is found.
     elsif ( $list && !ref($list) ) {
         return @{ $vars->{$list} || $self->global_vars->{$list} || [] };
     }
 
-    return ();
+    die "Invalid for-vars"
 }
 
+# Returns true if condition fails.
 sub check_cond_fail {
     my ( $self, $cond_tmpl, $vars ) = @_;  
 
     return 0 if !$cond_tmpl;
 
-    my $cond = ${$self->render( $cond_tmpl, $vars )};
+    my $cond = $self->render( $cond_tmpl, $vars );
 
     system('/bin/bash', '-c', "test $cond");
 
@@ -230,16 +230,15 @@ sub _resolve_block {
 sub process_block {
     my ( $self, $block ) = @_;
 
-
-
     my $vars = $self->init_vars( $block->{vars} );
 
     my $dir       = $block->{dir}; 
-    my $block_dir = pushd ${$self->render( $dir, { var => $_, %$vars } )}  if $dir;   
+    my $block_dir = pushd $self->render( $dir, { var => $_, %$vars } ) if $dir;   
 
-    #warn(Dumper($block->{commands}));
     $block->{commands} ||= [];
 
+    # Shell commands are transformed into exec format
+    # and added to the start of the exec list.
     foreach my $shell ( reverse @{$block->{shell} || []} ) {
 
         my $cfg = { exec => $shell };
@@ -249,15 +248,13 @@ sub process_block {
 
     foreach my $cfg ( @{$block->{commands}} ) { 
 
-        my $dir = $cfg->{dir};
-
-        if ( $dir ) {  
-            undef $block_dir;
-            $block_dir = pushd ${$self->render( $dir, { var => $_, %$vars } )}  
-        }
-
         if ( $self->check_cond_fail($cfg->{condition}, $vars) ) {
            next; 
+        }
+
+        if ( my $dir = $cfg->{dir} ) {  
+            undef $block_dir;
+            $block_dir = pushd $self->render( $dir, { var => $_, %$vars } )
         }
 
         if ( my $diag_tmpl = $cfg->{diag} ) {
@@ -266,7 +263,7 @@ sub process_block {
 
         if ( my $cmd_tmpl = $cfg->{exec} ) {
 
-            run3( ${$self->render( $cmd_tmpl, { var => $_, %$vars } )} ) 
+            run3( $self->render( $cmd_tmpl, { var => $_, %$vars } ) ) 
                 foreach $self->get_for_vars($cfg->{'for-vars'}, $vars ); 
         }
     }
@@ -291,8 +288,8 @@ sub run {
         my $block = $app->resolve_block( [ @argv ] );
 
         if ( ! $block ) {
-            if ( $ENV{DEX_FALLBACK_CMD} ) {
-                exec $ENV{DEX_FALLBACK_CMD}, @argv;
+            if ( my $fallback = $ENV{DEX_FALLBACK_CMD} || $self->config->{fallback} ) {
+                exec $fallback, @argv;
             } else {
                 print STDERR "Error: No such command.\n\n";
                 $app->display_menu;

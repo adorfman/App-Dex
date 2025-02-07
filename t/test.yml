@@ -2,10 +2,10 @@ vars:
   dir: 'somedir' 
   package: 'my package'
   cmd_var: 
-    command: 'test 0 -eq 1'
+    from_command: 'test 0 -eq 1'
     default: 6
   pwd:
-    command: pwd | tr -d '\n'
+    from_command: pwd | tr -d '\n'
 blocks:
   - name: test
     desc: "test version 2"
@@ -14,7 +14,7 @@ blocks:
       dir: 'localdir'
       file: 'somefile'
       truevar: 
-        env: IS_TRUE
+        from_env: IS_TRUE
         default: 0
       some_list:
         - 'this'
