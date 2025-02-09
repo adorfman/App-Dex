@@ -50,7 +50,7 @@ has config => (
         }
         else {
             die 'Invalid dexfile: '. $self->config_file;
-        }  
+        }
     },
 );
 
@@ -233,7 +233,7 @@ sub process_block {
     my $vars = $self->init_vars( $block->{vars} );
 
     my $dir       = $block->{dir}; 
-    my $block_dir = pushd $self->render( $dir, { var => $_, %$vars } ) if $dir;   
+    my $block_dir = pushd $self->render( $dir, $vars ) if $dir;
 
     $block->{commands} ||= [];
 
