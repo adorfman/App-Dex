@@ -66,7 +66,71 @@ following are supported attributes:
 
 =item * desc: The description given in the menu
 
+=item * vars: This attribute takes a dictionary that defines variables that will available for use in shell and command definitions.
+
+ They can a number, string or list.
+
+ varName: 'some string or number'
+ varList: 
+   - one
+   - two
+   - three
+
+
+They also take a dictionary config with the following attributes: 
+
+=over 4
+
+=item * from_command: Set the variable to the STDOUT of this command. The command must have an exit value of 0 or the value with not be set.
+
+=item * from_env: Set the variable to the value of this environment variable.
+
+=item * default: If the execution of C<from_command> returns non-zero or the environment variable for C<from_env> is not set, set this value.
+ 
+  varFromCommand:
+      from_command: pwd | tr -d '\n'
+      default: 'Unknown directory'  
+
+=back 
+
 =item * shell: An array of shell commands to run
+
+=item * commands: An array of dictionaries to that defined commands to run. The following attributes are supported:
+
+=over 4
+
+=item * diag: A string that will be echo'd to the terminal
+
+=item * dir: set the current working directory for commands executed after this.  You will be restored to the directory you started in once all commands finish.
+
+=item * for-vars: Takes a name of an existing list variable or a list. The command will executed foreach entry in the list, and the value of that entry will be available as the C<var> template variable.  
+
+     vars:
+      pwd:
+        from_command: pwd | tr -d '\n' 
+      some_list:
+        - 'this'
+        - 'that'  
+     commands:
+      - diag:  [%var%] in [%pwd%]
+        for-vars: some_list
+      - exec: echo 'shell with for-vars [%var%]'
+        for-vars: 
+          - 'one'
+          - 'two' 
+
+=item * condition: Takes a condition in the same format as the C<test> command.  The command will only execute if the condtion returns true, otherwise it is skipped.
+
+    truevar: 
+      from_env: IS_TRUE
+      default: 0 
+    commands:
+      - exec: echo 'conditional command'
+        condition: 1 -eq [%truevar%]  
+
+=item * exec: The same as a C<shell> command, but if you define it here you can make use of the C<for-vars>, C<dir> and C<condition> attributes.
+
+=back
 
 =item * children: An array that takes all of the same arguments, use for subcommands
 
@@ -75,70 +139,13 @@ following are supported attributes:
 =head2 Vesion 2 
 
 The Version 2 format expands the  C<Standard> format with additional options and 
-features.
+features. It is a dictionary that supports these attributes:
 
-  vars: 
-    some_dir: 'somedir' 
-    cwd:
-      from_command: pwd | tr -d '\n'
-      default: 'Unknown directory'
-  blocks:
-    - name: test
-      desc: "test version 2"
-      dir:  '[%pwd%]/lib' 
-      vars:
-        dir: 'localdir'
-        file: 'somefile'
-        truevar: 
-          from_env: IS_TRUE
-          default: 0
-        some_list:
-          - 'this'
-          - 'that' 
-      shell: 
-        - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%] [%pwd%]'
-      commands:
-        - diag: diag dir [%var%] in [%pwd%]
-          for-vars: some_list
-        - exec: echo 'shell with for-vars [%var%]'
-          for-vars: 
-            - 'one'
-            - 'two'
-        - exec: echo 'conditional command'
-          condition: 1 -eq [%truevar%]
-        - exec: pwd
-          dir:  '[%pwd%]/t' 
+=over 
 
+=item * vars: This is the same as the block C<vars> attribute except the variables defined here will be available in all blocks
 
-This format is a dictionary that supports the following attributes:
- 
-=over 4
-
-=item * 
-
-vars: This attribute takes a dictionary that defines global variables that will
-              availble to use in all block attributes. 
-
-They can defined as a number, string or list.
-
- varName: 'some string or number'
- varList: 
-   - one
-   - two
-   - three
-
-They also take a dictionary config with the following attributes:
-
-=over 4
-
-=item * from_command: Set the variable to the STDOUT of this command. The command must have an exit value of 0 or will be assumed it failed.
-
-=item * from_command: Set the variable to the value of this environment variable.
-
-=item * default: If the execution of C<from_command> returns non-zero or the environment variable for C<from_env> is not set, set this value.
+=item * blocks: Takes the same list of blocks as the C<Standard Format>
 
 =back
 
-=item * blocks: This takes the same list as the C<Standard Format>.
-
-=back
