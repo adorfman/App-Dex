@@ -60,7 +60,7 @@ has config_version => (
     builder => sub {
         my ( $self ) = @_; 
 
-        return $self->config->{version};
+        return ( $self->config->{version} || 2 );
     },
 );
 

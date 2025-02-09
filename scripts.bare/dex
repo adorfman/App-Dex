@@ -148,7 +148,9 @@ features. It is a dictionary that supports these attributes:
 
 =over 
 
-=item * vars: This is the same as the block C<vars> attribute except the variables defined here will be available in all blocks
+=item * version: Dex conifguration file version format. Currenly only supports '2'.
+
+=item * vars: This is the same as the block C<vars> attribute except the variables defined here will be available in all blocks. If a block config defines a variable with the same name then the block config value will take precedence.
 
 =item * blocks: Takes the same list of blocks as the C<Standard Format>
 
