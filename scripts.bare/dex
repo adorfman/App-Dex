@@ -16,7 +16,7 @@ dex - Directory Exec
 
 =head1 DESCRIPTION
 
-B<dex> is a command line utility to simply repeative tasks by defining them in
+B<dex> is a command line utility to simplify repetitive tasks by defining them in
 the specific directory you should be in when running them.
 
 Running dex from a directory with a F<.dex.yaml> or F<dex.yaml> file will
@@ -66,7 +66,7 @@ following are supported attributes:
 
 =item * desc: The description given in the menu
 
-=item * vars: This attribute takes a dictionary that defines variables that will available for use in shell and command definitions.
+=item * vars: This attribute takes a dictionary that defines variables that will available for use in shell and command definitions. 
 
  They can a number, string or list.
 
@@ -76,12 +76,17 @@ following are supported attributes:
    - two
    - three
 
+To use a variable within a block attribute, enclose the name of the variable with '[%' and '%]'
 
-They also take a dictionary config with the following attributes: 
+ shell: 
+   - echo 'varName = [%varName%]' 
+
+
+Var attributes also take a dictionary config with the following attributes: 
 
 =over 4
 
-=item * from_command: Set the variable to the STDOUT of this command. The command must have an exit value of 0 or the value with not be set.
+=item * from_command: Set the variable to the STDOUT of this command. The command must have an exit value of 0 or the value will not be set.
 
 =item * from_env: Set the variable to the value of this environment variable.
 
