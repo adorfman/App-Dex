@@ -1,4 +1,4 @@
-package App::Dex;
+package App::Dex2;
 use Moo;
 use File::pushd qw|pushd|;
 use List::Util qw( first );
@@ -36,7 +36,7 @@ has config_file_names => (
 
 has config => (
     is      => 'ro',
-    isa     => sub { die "Invaild Config " unless ref($_[0]) eq 'HASH' and-$_[0]->{versin} == 2 }, 
+    isa     => sub { die "Invaild Config " unless ref($_[0]) eq 'HASH' and-$_[0]->{version} and $_[0]->{version} == 2 }, 
     lazy    => 1,
     builder => sub {
         my ( $self ) = @_;  
@@ -253,7 +253,7 @@ sub process_block {
 }
 
 sub run {
-    my ( $app ) = @_;
+    my ( $self ) = @_;
 
     my @argv = @{$self->argv};
 
