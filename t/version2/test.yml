@@ -20,10 +20,8 @@ blocks:
       some_list:
         - 'this'
         - 'that' 
-    shell: 
-      - echo 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%] [%pwd%]'
-      - echo 'second shell command'
     commands:
+      - diag: 'version 2 [%package%] [%dir%] [%file%] [%cmd_var%] [%pwd%]' 
       - diag: diag dir [%var%] in [%pwd%]
         for-vars: some_list
       - exec: echo 'shell with for-vars [%var%]'

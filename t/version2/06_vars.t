@@ -18,6 +18,7 @@ my $mock_run3 = sub {
 my $mock = Test::MockModule->new('App::Dex2');
 $mock->mock(run3 => $mock_run3 );
 
+$ENV{TESTENV} = 'env value';
 
 my $tests = [
     {
@@ -115,6 +116,61 @@ my $tests = [
         title       => 'dir command',
         line        => __LINE__,
     }, 
+    {
+        content => [
+            '---',
+            'version: 2',
+            'vars:', 
+            '  test_env: ',
+            '    from_env: TESTENV',
+            'blocks:',
+            '  - name: command_test',
+            '    desc: Command Test',
+            '    commands:',
+            '      - exec: echo "[%test_env%]"'
+        ],
+        argv      => [qw|command_test|],
+        #run => sub { 
+        #    my ($app, $test) = @_;
+
+        #    $mock->mock(run3 => sub { 
+        #         #local $ENV{TESTENV} = 'env var';
+
+        #         $mock_run3->(@_);
+
+        #    }); 
+
+        #    $app->run(); 
+
+        #    $mock->mock(run3 => $mock_run3 ); 
+        #},
+        commands =>  [
+          q|echo "env value"|
+        ], 
+        title       => 'var from ENV',
+        line        => __LINE__,
+    },  
+    {
+        content => [
+            '---',
+            'version: 2',
+            'vars:', 
+            '  test_env: ',
+            '    from_env: BOOLENV',
+            '    default: "false"',
+            'blocks:',
+            '  - name: command_test',
+            '    desc: Command Test',
+            '    commands:',
+            '      - exec: echo "[%test_env%]"'
+        ],
+        argv      => [qw|command_test|],
+        commands =>  [
+          q|echo "false"|
+        ], 
+        title       => 'var from ENV default',
+        line        => __LINE__,
+    },
 ];
 
 foreach my $test ( @{$tests} ) {

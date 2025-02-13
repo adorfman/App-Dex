@@ -6,6 +6,11 @@ use IPC::Run3;
 
 our $VERSION = '0.002003';
 
+has argv => (
+    is      => 'ro', 
+    default => sub { [] }
+);
+
 
 my @CONFIG_FILE_NAMES = qw( dex.yaml .dex.yaml );
 
@@ -20,13 +25,13 @@ has config_file => (
 sub find_config_file {
     my ($class, @locations) = @_;
 
+    return $ENV{DEX_FILE} if $ENV{DEX_FILE}; 
+
     return (first { -e $_ } @locations);
 }
 
 sub _find_config_file {
     my $self = shift; 
-
-    return $ENV{DEX_FILE} if $ENV{DEX_FILE}; 
 
     return $self->find_config_file(@{$self->config_file_names});
 }

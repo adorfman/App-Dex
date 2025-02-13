@@ -90,7 +90,6 @@ sub init_vars {
             die "Invalid var $var"
         }
 
-
         if ( $val->{from_command} ) {
             local $?;
 
@@ -130,7 +129,7 @@ sub get_for_vars {
 
     return 1 if !$list;
 
-    # If We have an array already just return that.
+    # If we have an array already just return that.
     if ( ref($list) eq 'ARRAY' ) { 
         return @{$list};
     }
@@ -234,7 +233,7 @@ sub process_block {
            next; 
         }
 
-        if ( my $dir = $cfg->{dir} ) {  
+        if ( my $dir = $cfg->{dir} ) {
             undef $block_dir;
             $block_dir = pushd $self->render( $dir, { var => $_, %$vars } )
         }
