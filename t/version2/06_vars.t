@@ -7,12 +7,15 @@ use Test::Deep;
 use App::Dex2;
 use File::Temp;
 use Test::MockModule;
+use IPC::Run3;
 
 my $commands_run = [];
 my $mock_run3 = sub {
-    my $cmd = shift;
+    my ($cmd, @args) = @_;
 
     push @$commands_run, $cmd;
+
+    run3($cmd, @args)
 };
 
 my $mock = Test::MockModule->new('App::Dex2');
@@ -130,20 +133,6 @@ my $tests = [
             '      - exec: echo "[%test_env%]"'
         ],
         argv      => [qw|command_test|],
-        #run => sub { 
-        #    my ($app, $test) = @_;
-
-        #    $mock->mock(run3 => sub { 
-        #         #local $ENV{TESTENV} = 'env var';
-
-        #         $mock_run3->(@_);
-
-        #    }); 
-
-        #    $app->run(); 
-
-        #    $mock->mock(run3 => $mock_run3 ); 
-        #},
         commands =>  [
           q|echo "env value"|
         ], 
@@ -169,6 +158,53 @@ my $tests = [
           q|echo "false"|
         ], 
         title       => 'var from ENV default',
+        line        => __LINE__,
+    },
+    {
+        content => [
+            '---',
+            'version: 2',
+            'vars:', 
+            '  test_cmd: ',
+            '    from_command: echo  "command value"',
+            '    default: "failed"',
+            'blocks:',
+            '  - name: command_test',
+            '    desc: Command Test',
+            '    commands:',
+            '      - exec: echo "var [%test_cmd%]"'
+        ],
+        argv      => [qw|command_test|],
+        commands =>  [
+          [ '/bin/bash', '-c', 'echo  "command value"' ],
+          q|echo "var command value"|
+        ], 
+        title       => 'var from command',
+        line        => __LINE__,
+    },
+    {
+        content => [
+            '---',
+            'version: 2',
+            'vars:', 
+            '  list_cmd: ',
+            '    from_command: printf "this\nthat\nthese\n"',
+            '    default: "failed"',
+            'blocks:',
+            '  - name: command_test',
+            '    desc: Command Test',
+            '    commands:',
+            '      - exec: echo "var [%var%]"',
+            '        for-vars: list_cmd'
+        ],
+        argv      => [qw|command_test|],
+        commands =>  [
+          [ '/bin/bash', '-c', 'printf "this\nthat\nthese\n"' ],
+          q|echo "var this"|,
+          q|echo "var that"|,
+          q|echo "var these"|,
+        ], 
+        title       => 'for-vars var from command',
         line        => __LINE__,
     },
 ];

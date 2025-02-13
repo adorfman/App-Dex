@@ -93,9 +93,14 @@ sub init_vars {
         if ( $val->{from_command} ) {
             local $?;
 
-            run3(['/bin/bash', '-c', $val->{from_command}], undef, \$ret->{$var} );
+            my $stdout;
+            run3(['/bin/bash', '-c', $val->{from_command}], undef, \$stdout );
 
-            undef $ret->{$var} if $?; # ensure fallback to default value on command error 
+            if ( $stdout && !$? ) {
+                chomp $stdout;
+                my @lines = split(/\n/, $stdout); 
+                $ret->{$var} = scalar @lines == 1 ? $lines[0] : \@lines;
+            }
         }
         elsif ( $val->{from_env} ) { 
             $ret->{$var} = $ENV{$val->{from_env}};
