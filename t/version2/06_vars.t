@@ -61,6 +61,28 @@ my $tests = [
     {
         content => [
             '---',
+            'vars:', 
+            '  say_this: "hello world"',
+            'version: 2',
+            'blocks:',
+            '  - name: command_test',
+            '    desc: Command Test',
+            '    vars:', 
+            '      say_this: "fizz buzz"', 
+            '      and_this: "foo bar"',
+            '    commands:',
+            '      - diag: "[%say_this%] and [%and_this%]"'
+        ],
+        argv      => [qw|command_test|],
+        commands =>  [
+          q|echo 'fizz buzz and foo bar'|
+        ], 
+        title       => 'diag local var override command',
+        line        => __LINE__,
+    },    
+    {
+        content => [
+            '---',
             'version: 2',
             'vars:', 
             '  test_dir: "t"',   
@@ -80,7 +102,7 @@ my $tests = [
                  $mock_run3->(@_);
 
                  my $dir = getcwd;
-                 ok $dir =~ qr|t$|, 'changed directory';
+                 ok $dir =~ qr|t$|, 'changed to var directory';
             }); 
 
             $app->run(); 
