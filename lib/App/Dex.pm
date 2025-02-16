@@ -3,6 +3,7 @@ use Moo;
 use List::Util qw( first );
 use YAML::PP qw( LoadFile );
 use IPC::Run3;
+use Try::Tiny;
 
 our $VERSION = '0.002003';
 
@@ -12,7 +13,7 @@ has argv => (
 );
 
 
-my @CONFIG_FILE_NAMES = qw( dex.yaml .dex.yaml );
+our @CONFIG_FILE_NAMES = qw( dex.yaml .dex.yaml );
 
 has config_file => (
     is      => 'ro',
@@ -128,7 +129,7 @@ sub _run_block_shell {
     }
 }
 
-sub load_version_from_cfg {
+sub load_version_from_config {
     my ( $class, %params ) = @_;
 
     my $config_file = $class->find_config_file(@CONFIG_FILE_NAMES);
@@ -137,7 +138,11 @@ sub load_version_from_cfg {
     if ( ref($config) eq 'ARRAY' ) {
         return App::Dex->new( config_file => $config_file,  config => $config, %params );
     }
-    elsif (ref($config) eq 'HASH' and $config->{version} == 2 ) {
+    elsif (ref($config) eq 'HASH' ) {
+
+        die "Invalid Config Version\n" 
+           unless $config->{version} and $config->{version} == 2;
+
         require App::Dex2;
 
         return App::Dex2->new( config_file => $config_file,  config => $config, %params ); 
