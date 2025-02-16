@@ -4,6 +4,7 @@ use List::Util qw( first );
 use YAML::PP qw( LoadFile );
 use IPC::Run3;
 use Try::Tiny;
+use Pod::Usage qw(pod2usage);
 
 our $VERSION = '0.002003';
 
