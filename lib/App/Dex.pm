@@ -133,7 +133,7 @@ sub _run_block_shell {
 sub load_version_from_config {
     my ( $class, %params ) = @_;
 
-    my $config_file = $class->find_config_file(@CONFIG_FILE_NAMES);
+    my $config_file = $class->find_config_file(@CONFIG_FILE_NAMES) or die "No Dex Config File Found\n";;
     my $config      = LoadFile $config_file;
 
     if ( ref($config) eq 'ARRAY' ) {
