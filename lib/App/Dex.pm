@@ -16,6 +16,14 @@ has argv => (
 
 our @CONFIG_FILE_NAMES = qw( dex.yaml .dex.yaml );
 
+has config_file_names => (
+    is      => 'ro',
+    lazy    => 1,
+    default => sub {
+        return [ @CONFIG_FILE_NAMES ],
+    },
+); 
+
 has config_file => (
     is      => 'ro',
     isa     => sub { die "Config file ".$_[0]." not found" unless $_[0] && -e $_[0] },
@@ -24,27 +32,19 @@ has config_file => (
 
 );
 
-sub find_config_file {
-    my ($class, @locations) = @_;
-
-    return $ENV{DEX_FILE} if $ENV{DEX_FILE}; 
-
-    return (first { -e $_ } @locations);
-}
-
 sub _find_config_file {
     my $self = shift; 
 
     return $self->find_config_file(@{$self->config_file_names});
 }
 
-has config_file_names => (
-    is      => 'ro',
-    lazy    => 1,
-    default => sub {
-        return [ @CONFIG_FILE_NAMES ],
-    },
-);
+sub find_config_file {
+    my ($class, @locations) = @_;
+
+    return $ENV{DEX_FILE} if $ENV{DEX_FILE}; 
+
+    return (first { -e $_ } @locations);
+} 
 
 has config => (
     is      => 'ro',
@@ -147,7 +147,10 @@ sub load_version_from_config {
         require App::Dex2;
 
         return App::Dex2->new( config_file => $config_file,  config => $config, %params ); 
-    }  
+    }
+    else {
+        die "Invalid Config\n"
+    }
 
 }
 
