@@ -83,10 +83,13 @@ features.
        some_list:
          - 'this'
          - 'that'  
-     commands:
-      - exec: echo 'Working in [%work_dir%]'
-      - diag:  [%var%] in [%work_dir%]
-        for-vars: some_list 
+     blocks:
+       - name: example 
+         desc: An Example block of commands.
+         commands:
+           - exec: echo 'Working in [%work_dir%]'
+           - diag:  [%var%] in [%work_dir%]
+             for-vars: some_list 
 
 
 This format is a dictionary that supports these attributes: 
@@ -95,18 +98,22 @@ This format is a dictionary that supports these attributes:
 
 =item * version: This attribute must be present and set to 2. 
 
-=item * vars: This attribute takes a dictionary that defines variables that will available for use in all command definitions. They can a number, string or list.
+=item * vars: This attribute takes a dictionary that defines variables that will available for use in all command definitions. They can be a number, string or list.
 
- varName: 'some string or number'
- varList: 
-   - one
-   - two
-   - three
+ vars:
+   varName: 'some string or number'
+   varList: 
+     - one
+     - two
+     - three
 
 To use a variable within a block attribute, enclose the name of the variable with '[%' and '%]'
 
- commands: 
-   - exec: echo 'varName = [%varName%]' 
+ blocks:
+   - name: var-test
+     desc: "Example block with var" 
+     commands: 
+       - exec: echo 'varName = [%varName%]' 
 
 
 Var attributes also take a dictionary config with the following attributes: 
@@ -120,8 +127,8 @@ Var attributes also take a dictionary config with the following attributes:
 =item * default: If the execution of C<from_command> returns non-zero or the environment variable for C<from_env> is not set, set this value.
  
   varFromCommand:
-      from_command: pwd | tr -d '\n'
-      default: 'Unknown directory'  
+    from_command: pwd | tr -d '\n'
+    default: 'Unknown directory'  
 
 =back 
 
@@ -133,7 +140,9 @@ Var attributes also take a dictionary config with the following attributes:
 
 =item * desc: The description given in the menu
 
-=item * commands: An array of dictionaries to that defined commands to run. The following attributes are supported:
+=item * vars: This attribute takes the same arguments as the top level vars attribute, but variables defined here are only availabe for commands defined in the same block.
+
+=item * commands: An array of dictionaries to that defined commands to run. The following attributes for each dictionary are supported:
 
 =over 4
 
@@ -143,12 +152,14 @@ Var attributes also take a dictionary config with the following attributes:
 
 =item * for-vars: Takes a name of an existing list variable or a list. The command will executed foreach entry in the list, and the value for each iteration will be available as the C<var> template variable.  
 
+   - name: for-vars-test
+     desc: "Example block with for-var"
      vars:
-      pwd:
-        from_command: pwd | tr -d '\n' 
-      some_list:
-        - 'this'
-        - 'that'  
+       pwd:
+         from_command: pwd | tr -d '\n' 
+       some_list:
+         - 'this'
+         - 'that'  
      commands:
       - diag:  [%var%] in [%pwd%]
         for-vars: some_list
@@ -159,9 +170,10 @@ Var attributes also take a dictionary config with the following attributes:
 
 =item * condition: Takes a condition in the same format as the C<test> command.  The command will only execute if the condtion returns true, otherwise the command is skipped.
 
-    truevar: 
-      from_env: IS_TRUE
-      default: 0 
+    vars:
+      truevar: 
+        from_env: IS_TRUE
+        default: 0 
     commands:
       - exec: echo 'conditional command'
         condition: 1 -eq [%truevar%]  
@@ -172,7 +184,7 @@ Var attributes also take a dictionary config with the following attributes:
 
 =item * dir: set the current working directory for commands in this block. Specific commands can also change this directory.  You will be restored to the directory you started in once all commands finish. 
 
-=item * children: An array that takes all of the same arguments, use for subcommands
+=item * children: An array of blocks that takes all of the same arguments, use for subcommands
 
 =back 
 

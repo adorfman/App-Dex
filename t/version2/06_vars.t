@@ -151,7 +151,7 @@ my $tests = [
             '  - name: command_test',
             '    desc: Command Test',
             '    commands:',
-            '      - exec: echo "[%test_env%]"'
+            '      - exec: echo "[% test_env %]"'
         ],
         argv      => [qw|command_test|],
         commands =>  [
@@ -194,7 +194,7 @@ my $tests = [
             '  - name: command_test',
             '    desc: Command Test',
             '    commands:',
-            '      - exec: echo "var [%var%]"',
+            '      - exec: echo "var [% var %]"',
             '        for-vars: list_cmd'
         ],
         argv      => [qw|command_test|],
