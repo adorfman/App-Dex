@@ -63,3 +63,32 @@ dev         : Control a local development server.
     reset       : Delete the database volume.
 test        : Run the tests.
 ```
+
+## Config File Version 2
+
+*dex* now supports a configuration format. The existing format is still supported and will function the same, but using this new format adds some new options and features that allow you to run more dynamic commands. 
+
+```YAML
+     version: 2
+     vars:
+       top_var: 'I can be used in every block'
+       some_list:
+         - 'this'
+         - 'that'  
+       work_dir: 
+         from_command: pwd | tr -d '\n'  
+     blocks:
+       - name: var-example 
+         desc: An Example block command with global and block variables.
+         vars:
+           some_string: 'some var' 
+         commands:
+           - exec: echo 'Global var work_dir: [% work_dir %], block variable [% some_string %] '
+       - name: loop-example
+         desc: An Example block command that looks over a list var.
+         commands: 
+           - exec: echo 'repeating command with variable [% var %]
+             for-vars: some_list  
+```
+
+
