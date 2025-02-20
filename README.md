@@ -66,24 +66,30 @@ test        : Run the tests.
 
 ## Config File Version 2
 
-*dex* now supports a configuration format. The existing format is still supported and will function the same, but using this new format adds some new options and features that allow you to run more dynamic commands. 
+*dex* now has a new configuration format. The existing format is still supported and will function the same, but using this new format adds some new options and features that allow you to run more dynamic commands. 
 
 ```YAML
      version: 2
      vars:
-       top_var: 'I can be used in every block'
+       root_var: 'I can be used in every block'
        some_list:
          - 'this'
          - 'that'  
        work_dir: 
          from_command: pwd | tr -d '\n'  
+
      blocks:
        - name: var-example 
          desc: An Example block command with global and block variables.
          vars:
-           some_string: 'some var' 
+           some_string: 'for this block only' 
+           env_var:
+             from_env: SECOND_CMD 
+             default: 0
          commands:
            - exec: echo 'Global var work_dir: [% work_dir %], block variable [% some_string %] '
+           - exec: echo 'SECOND_CMD is set'
+             condition: [%env_var%] -eq 1
        - name: loop-example
          desc: An Example block command that looks over a list var.
          commands: 
@@ -91,4 +97,39 @@ test        : Run the tests.
              for-vars: some_list  
 ```
 
+The root vars attribute defines variables that can be used in any block attribute by enclosing the name of the variable
+within '[%' and '%]'.  These variables can be a string, number a list containing a combination of either. 
 
+```YAML
+     vars:
+       string_var: 'I can be used in every block'
+       number:var: 23423
+       list_var:
+         - 'foo'
+         - 'bar'
+         - 34
+```
+
+You can also the values to be initialized from a command or referencing and environment variable by assigning the
+variables a dictionary config..
+
+```YAML
+     vars:
+       perl5_version: 
+         from_command: "perl -MConfig -e 'print $Config{version}'"
+         default: 'command failed'
+       perl5_lib: 
+         from_env: PERL5LIB
+         default: 'NO PERL5LIB SET'
+
+``` 
+
+The 'from_command' attribute will execute the set command and, assuming the command exits with a value of 0, the STDOUT
+will assigned to the variable name. If the command returns multiple lines the variable will become a list containing
+each line.  If the command exits with a non-zero value then the variable will be assigned the 'default' attribute value
+or remain undefined if no 'default' attribute is provided.
+
+'from_env' will check for a matching environment variable and if found will assign that value to the variable. If the
+environment variable is not found it will use the 'default' value if one is set.
+
+'blocks' is similar to the root list in the Standard Format. It defines a list of named blocks of commands and nestable sub blocks of commands to run.  Within each block you can define 'vars' the same way the root 'vars' attribute does, but these variables will only be available for commands in that block.
