@@ -56,16 +56,16 @@ my $tests = [
             '  - name: command_test',
             '    desc: Command Test',
             '    commands:',
-            '      - exec: echo "[%var%]"',
+            '      - exec: echo "[%var%] [%index%]"',
             '        for-vars: some_list',
         ],
         argv      => [qw|command_test|],
         commands =>  [
-          'echo "one"',
-          'echo "two"',
-          'echo "three"'
+          'echo "one 0"',
+          'echo "two 1"',
+          'echo "three 2"'
         ], 
-        title       => 'for-vars list var',
+        title       => 'for-vars list var and index',
         line        => __LINE__,
     }, 
 ];

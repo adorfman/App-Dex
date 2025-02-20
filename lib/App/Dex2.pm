@@ -249,7 +249,8 @@ sub process_block {
 
         if ( my $cmd_tmpl = $cfg->{exec} ) {
 
-            run3( $self->render( $cmd_tmpl, { var => $_, %$vars } ) ) 
+            my $index = 0;
+            run3( $self->render( $cmd_tmpl, { var => $_, index => $index++, %$vars } ) ) 
                 foreach $self->get_for_vars($cfg->{'for-vars'}, $vars ); 
         }
     }
