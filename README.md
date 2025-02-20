@@ -97,7 +97,7 @@ test        : Run the tests.
              for-vars: some_list  
 ```
 
-The root vars attribute defines variables that can be used in any block attribute by enclosing the name of the variable
+The root vars attribute defines variables that can be used in any block by enclosing the name of the variable
 within '[%' and '%]'.  These variables can be a string, number a list containing a combination of either. 
 
 ```YAML
@@ -110,8 +110,7 @@ within '[%' and '%]'.  These variables can be a string, number a list containing
          - 34
 ```
 
-You can also the values to be initialized from a command or referencing and environment variable by assigning the
-variables a dictionary config..
+You can also configure variables to be initialized from the output of command or by referencing an environment variable by assigning the variables a dictionary config.
 
 ```YAML
      vars:
@@ -124,12 +123,52 @@ variables a dictionary config..
 
 ``` 
 
-The 'from_command' attribute will execute the set command and, assuming the command exits with a value of 0, the STDOUT
-will assigned to the variable name. If the command returns multiple lines the variable will become a list containing
+The 'from_command' attribute will execute the set command and, assuming the command exits with a value of 0, assign its' STDOUT to the value of the variable. If the command returns multiple lines the variable will become a list containing
 each line.  If the command exits with a non-zero value then the variable will be assigned the 'default' attribute value
 or remain undefined if no 'default' attribute is provided.
 
 'from_env' will check for a matching environment variable and if found will assign that value to the variable. If the
 environment variable is not found it will use the 'default' value if one is set.
 
-'blocks' is similar to the root list in the Standard Format. It defines a list of named blocks of commands and nestable sub blocks of commands to run.  Within each block you can define 'vars' the same way the root 'vars' attribute does, but these variables will only be available for commands in that block.
+'blocks' is similar to the root list in the Standard Format. It defines a list of named blocks of commands and nestable sub blocks of commands to run.  
+
+```YAML
+      blocks:
+       - name: block-example
+         desc: An Example block.
+         vars:
+           local_var: 'for this block only' 
+         commands:
+           - diag: '[%local_var%] execute update'
+           - exec:  /bin/uptime
+```
+
+Within each block you can define 'vars' the same way the root 'vars' attribute does, but these variables will only be available for commands in that block.  The 'commands' attribute replaces the 'shell' attribute and lets you define three kinds of commands.
+
+  * diag - This command is an alias for echo and will print the string template to the terminal.
+
+  * dir  - Sets the working directory for commands executed after this. 
+
+  * exec - A command to execute.
+
+The following configuration attributes are also available for each command.
+
+  * condition - Takes a condition in the same format as the *test* command. If the condition returns false the command
+    will be skipped.
+
+  * for-vars: Can be a list or the name of variable that contains a list.  The command will be executed for each element
+    of the list.  The value and index for each element in the list will be available as the 'var' 'index' variables.
+
+```YAML
+      blocks:
+       - name: for-vars-example
+         desc: An Example block.
+         vars:
+           local_list: 
+             - 1
+             - 2
+             - 3
+         commands:
+           - diag: 'value [%var%] at index [%index%]'
+             for-vars: local_list
+```     

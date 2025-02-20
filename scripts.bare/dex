@@ -150,7 +150,7 @@ Var attributes also take a dictionary config with the following attributes:
 
 =item * dir: set the current working directory for commands executed after this.  You will be restored to the directory you started in once all commands finish.
 
-=item * for-vars: Takes a name of an existing list variable or a list. The command will executed foreach entry in the list, and the value for each iteration will be available as the C<var> template variable.  
+=item * for-vars: Takes a name of an existing list variable or a list. The command will executed foreach entry in the list, and the value and index for each iteration will be available as the C<var> and C<index> template variables.
 
    - name: for-vars-test
      desc: "Example block with for-var"
@@ -161,7 +161,7 @@ Var attributes also take a dictionary config with the following attributes:
          - 'this'
          - 'that'  
      commands:
-      - diag:  [%var%] in [%pwd%]
+      - diag:  'value [%var%] at index [%index%]'
         for-vars: some_list
       - exec: echo 'shell with for-vars [%var%]'
         for-vars: 
