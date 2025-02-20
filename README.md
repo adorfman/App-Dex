@@ -110,7 +110,7 @@ within '[%' and '%]'.  These variables can be a string, number a list containing
          - 34
 ```
 
-You can also configure variables to be initialized from the output of command or by referencing an environment variable by assigning the variables a dictionary config.
+You can also configure variables to be initialized from the output of an external command or by referencing an environment variable.
 
 ```YAML
      vars:
@@ -127,8 +127,7 @@ The 'from_command' attribute will execute the set command and, assuming the comm
 each line.  If the command exits with a non-zero value then the variable will be assigned the 'default' attribute value
 or remain undefined if no 'default' attribute is provided.
 
-'from_env' will check for a matching environment variable and if found will assign that value to the variable. If the
-environment variable is not found it will use the 'default' value if one is set.
+'from_env' will check for a matching environment variable and if found will assign that value to the variable. When the environment variable is not defined the 'default' attribute value is used.
 
 'blocks' is similar to the root list in the Standard Format. It defines a list of named blocks of commands and nestable sub blocks of commands to run.  
 
@@ -143,11 +142,13 @@ environment variable is not found it will use the 'default' value if one is set.
            - exec:  /bin/uptime
 ```
 
-Within each block you can define 'vars' the same way the root 'vars' attribute does, but these variables will only be available for commands in that block.  The 'commands' attribute replaces the 'shell' attribute and lets you define three kinds of commands.
+Within each block you can define 'vars' with the same options the root 'vars' attribute, but these variables will only be available for commands in that block.  
+
+The 'commands' attribute replaces the 'shell' attribute and lets you define three kinds of commands.
 
   * diag - This command is an alias for echo and will print the string template to the terminal.
 
-  * dir  - Sets the working directory for commands executed after this. 
+  * dir  - Sets the working directory for commands executed after this.  
 
   * exec - A command to execute.
 
