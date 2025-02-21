@@ -97,7 +97,7 @@ test        : Run the tests.
              for-vars: some_list  
 ```
 
-The root vars attribute defines variables that can be used in any block by enclosing the name of the variable
+The root `vars` attribute defines variables that can be used in any block by enclosing the name of the variable
 within `[%` and `%]`.  These variables can be a string, number a list containing a combination of either. 
 
 ```YAML
