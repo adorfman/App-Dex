@@ -98,7 +98,7 @@ test        : Run the tests.
 ```
 
 The root vars attribute defines variables that can be used in any block by enclosing the name of the variable
-within '[%' and '%]'.  These variables can be a string, number a list containing a combination of either. 
+within `[%` and `%]`.  These variables can be a string, number a list containing a combination of either. 
 
 ```YAML
      vars:
@@ -123,13 +123,13 @@ You can also configure variables to be initialized from the output of an externa
 
 ``` 
 
-The 'from_command' attribute will execute the set command and, assuming the command exits with a value of 0, assign its' STDOUT to the value of the variable. If the command returns multiple lines the variable will become a list containing
-each line.  If the command exits with a non-zero value then the variable will be assigned the 'default' attribute value
+The `from_command` attribute will execute the set command and, assuming the command exits with a value of 0, assign its' STDOUT to the value of the variable. If the command returns multiple lines the variable will become a list containing
+each line.  If the command exits with a non-zero value then the variable will be assigned the `default` attribute value
 or remain undefined if no 'default' attribute is provided.
 
-'from_env' will check for a matching environment variable and if found will assign that value to the variable. When the environment variable is not defined the 'default' attribute value is used.
+`from_env` will check for a matching environment variable and if found will assign that value to the variable. When the environment variable is not defined the 'default' attribute value is used.
 
-'blocks' is similar to the root list in the Standard Format. It defines a list of named blocks of commands and nestable sub blocks of commands to run.  
+`blocks` is similar to the root list in the Standard Format. It defines a list of named blocks of commands and nestable sub blocks of commands to run.  
 
 ```YAML
       blocks:
@@ -142,23 +142,22 @@ or remain undefined if no 'default' attribute is provided.
            - exec:  /bin/uptime
 ```
 
-Within each block you can define 'vars' with the same options the root 'vars' attribute, but these variables will only be available for commands in that block.  
+Within each block you can define `vars` with the same options the root `vars` attribute, but these variables will only be available for commands in that block.  
 
-The 'commands' attribute replaces the 'shell' attribute and lets you define three kinds of commands.
+The `commands` attribute replaces the `shell` attribute and lets you define three kinds of commands.
 
-  * diag - This command is an alias for echo and will print the string template to the terminal.
+  * `diag` - This command is an alias for echo and will print the string template to the terminal.
 
-  * dir  - Sets the working directory for commands executed after this.  
+  * `dir`  - Sets the working directory for commands executed after this.  
 
-  * exec - A command to execute.
+  * `exec` - A command to execute.
 
 The following configuration attributes are also available for each command.
 
-  * condition - Takes a condition in the same format as the *test* command. If the condition returns false the command
+  * `condition` - Takes a condition in the same format as the *test* command. If the condition returns false the command
     will be skipped.
 
-  * for-vars: Can be a list or the name of variable that contains a list.  The command will be executed for each element
-    of the list.  The value and index for each element in the list will be available as the 'var' 'index' variables.
+  * `for-vars` - Can be a list or the name of variable that contains a list.  The command will be executed for each element of the list.  The value and index for each element in the list will be available as the `var` and `index` variables.
 
 ```YAML
       blocks:
