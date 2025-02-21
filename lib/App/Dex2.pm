@@ -17,31 +17,34 @@ has argv => (
 
 has config_file => (
     is      => 'ro',
-    isa     => sub { die 'Config file not found' unless $_[0] && -e $_[0] },
+    isa     => sub { die "Error: No config file found\n" unless $_[0] && -e $_[0] },
     lazy    => 1,
     default => sub {
+
         return $ENV{DEX_FILE} if $ENV{DEX_FILE};
 
-        first { -e $_ } @{shift->config_file_names};
+        return first { -e $_ } @{shift->config_file_names};
     },
 );
+
+our @CONFIG_FILE_NAMES = qw( dex.yaml .dex.yaml ); 
 
 has config_file_names => (
     is      => 'ro',
     lazy    => 1,
     default => sub {
-        return [ qw( dex.yaml .dex.yaml ) ],
+        return [ @CONFIG_FILE_NAMES ],
     },
 );
 
 has config => (
     is      => 'ro',
-    isa     => sub { die "Invaild Config " unless ref($_[0]) eq 'HASH' and-$_[0]->{version} and $_[0]->{version} == 2 }, 
+    isa     => sub { die "Error: Invaild Config Version\n" unless ref($_[0]) eq 'HASH' and $_[0]->{version} and $_[0]->{version} == 2 }, 
     lazy    => 1,
     builder => sub {
-        my ( $self ) = @_;  
+        my ( $self ) = @_;
 
-        return LoadFile shift->config_file;
+        return try { LoadFile $self->config_file } catch { die "Error reading config file: \n$_" };
     },
 );
 
@@ -62,7 +65,7 @@ has config_blocks => (
     builder => sub {
        shift->config->{blocks};
     },
-); 
+);
 
 has global_vars => (
     is      => 'ro',
@@ -72,7 +75,7 @@ has global_vars => (
 
         return $self->init_vars($self->config->{vars});
     },
-); 
+);
 
 sub init_vars {
     my ( $self, $var_cfg ) = @_;
@@ -121,7 +124,7 @@ has tt => (
     builder => sub {
        Template::Simple->new();
     },
-); 
+);
 
 sub render {
     my ( $self, $tmpl, $vars ) = @_; 
@@ -195,7 +198,7 @@ sub display_menu {
     $menu = $self->menu unless $menu;
 
     foreach my $item ( @{$menu} ) {
-        printf( "%s%-24s: %s\n", " " x ( 4 * $item->{depth} ), $item->{name}, $item->{desc}  );
+        printf( "%s%-24s: %s\n", " " x ( 4 * $item->{depth} ), $item->{name}, $item->{desc} );
     }
 }
 
@@ -232,26 +235,26 @@ sub process_block {
 
     $block->{commands} ||= [];
 
-    foreach my $cfg ( @{$block->{commands}} ) { 
+    foreach my $cfg ( @{$block->{commands}} ) {
 
         if ( $self->check_cond_fail($cfg->{condition}, $vars) ) {
            next; 
         }
 
         if ( my $dir = $cfg->{dir} ) {
-            undef $block_dir;
-            $block_dir = pushd $self->render( $dir, { var => $_, %$vars } )
+            undef $block_dir; # calls File::pushd destructor to return us to original directory
+            $block_dir = pushd $self->render( $dir, { var => $_, %$vars } );
         }
 
         if ( my $diag_tmpl = $cfg->{diag} ) {
-           $cfg->{exec} = "echo '$diag_tmpl'"
+           $cfg->{exec} = "echo '$diag_tmpl'";
         }
 
         if ( my $cmd_tmpl = $cfg->{exec} ) {
 
             my $index = 0;
-            run3( $self->render( $cmd_tmpl, { var => $_, index => $index++, %$vars } ) ) 
-                foreach $self->get_for_vars($cfg->{'for-vars'}, $vars ); 
+            run3( $self->render( $cmd_tmpl, { var => $_, index => $index++, %$vars } ) )
+                foreach $self->get_for_vars($cfg->{'for-vars'}, $vars );
         }
     }
 
@@ -265,9 +268,6 @@ sub run {
     if ( @argv && ( $argv[0] eq '--help' || $argv[0] eq '-h' ) ) {
         pod2usage( -verbose => 2 );
     }
-
-    # Throw an error if we couldn't find a config file.
-    try { $self->config_file } catch { die "Error: No config file found.\n" };
 
     if ( @argv ) {
         my $block = $self->resolve_block( [ @argv ] );

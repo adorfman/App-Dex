@@ -26,7 +26,7 @@ has config_file_names => (
 
 has config_file => (
     is      => 'ro',
-    isa     => sub { die "Config file ".$_[0]." not found" unless $_[0] && -e $_[0] },
+    isa     => sub { die "Error: No config file found\n" unless $_[0] && -e $_[0] },
     lazy    => 1,
     builder => '_find_config_file'
 
@@ -41,7 +41,7 @@ sub _find_config_file {
 sub find_config_file {
     my ($class, @locations) = @_;
 
-    return $ENV{DEX_FILE} if $ENV{DEX_FILE}; 
+    return $ENV{DEX_FILE} if ($ENV{DEX_FILE} && -e $ENV{DEX_FILE});
 
     return (first { -e $_ } @locations);
 } 
@@ -50,9 +50,17 @@ has config => (
     is      => 'ro',
     lazy    => 1,
     builder => sub {
-        LoadFile shift->config_file;
+        my $self = shift;
+
+        $self->load_config($self->config_file);
     },
 );
+
+sub load_config {
+    my ($class, $config_file) = @_; 
+
+    return try { LoadFile $config_file } catch { die "Error reading config file: \n$_" };
+}
 
 has menu => (
     is      => 'ro',
@@ -87,7 +95,7 @@ sub display_menu {
     $menu = $self->menu unless $menu;
 
     foreach my $item ( @{$menu} ) {
-        printf( "%s%-24s: %s\n", " " x ( 4 * $item->{depth} ), $item->{name}, $item->{desc}  );
+        printf( "%s%-24s: %s\n", " " x ( 4 * $item->{depth} ), $item->{name}, $item->{desc} );
     }
 }
 
@@ -133,8 +141,8 @@ sub _run_block_shell {
 sub load_version_from_config {
     my ( $class, %params ) = @_;
 
-    my $config_file = $class->find_config_file(@CONFIG_FILE_NAMES) or die "No Dex Config File Found\n";;
-    my $config      = LoadFile $config_file;
+    my $config_file = $class->find_config_file(@CONFIG_FILE_NAMES) or die "Error: No config file found\n";
+    my $config      = $class->load_config($config_file);
 
     if ( ref($config) eq 'ARRAY' ) {
         return App::Dex->new( config_file => $config_file,  config => $config, %params );
@@ -146,7 +154,7 @@ sub load_version_from_config {
 
         require App::Dex2;
 
-        return App::Dex2->new( config_file => $config_file,  config => $config, %params ); 
+        return App::Dex2->new( config_file => $config_file,  config => $config, %params );
     }
     else {
         die "Invalid Config\n"
@@ -162,9 +170,6 @@ sub run {
     if ( @argv && ( $argv[0] eq '--help' || $argv[0] eq '-h' ) ) {
         pod2usage( -verbose => 2 );
     }
-
-    # Throw an error if we couldn't find a config file.
-    try { $self->config_file } catch { die "Error: No config file found.\n" };
 
     if ( @argv ) {
         my $block = $self->resolve_block( [ @argv ] );
